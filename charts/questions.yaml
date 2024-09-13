@@ -33,21 +33,21 @@ questions:
   required: true
   type: password
   group: "Test"
-- variable: storageclass
-  description: "これはテストです。"
-  required: true
-  type: storageclass
-  group: "Test"
-- variable: hostname
-  description: "これはテストです。"
-  required: true
-  type: hostname
-  group: "Test"
-- variable: pvc
-  description: "これはテストです。"
-  required: true
-  type: pvc
-  group: "Test"
+#- variable: storageclass
+#  description: "これはテストです。"
+#  required: true
+#  type: storageclass
+#  group: "Test"
+#- variable: hostname
+#  description: "これはテストです。"
+#  required: true
+#  type: hostname
+#  group: "Test"
+#- variable: pvc
+#  description: "これはテストです。"
+#  required: true
+#  type: pvc
+#  group: "Test"
 - variable: secret
   description: "これはテストです。"
   required: true
