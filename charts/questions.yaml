@@ -23,6 +23,10 @@ questions:
   description: "これはテストです。"
   required: true
   type: enum
+  options:
+  - a
+  - b
+  - c
   group: "Test"
 - variable: password
   description: "これはテストです。"
