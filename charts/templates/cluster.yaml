@@ -1,7 +1,7 @@
 apiVersion: provisioning.cattle.io/v1
 kind: Cluster
 metadata:
-  name: rke2-custom2
+  name: rke2-custom3
   namespace: fleet-default
 spec:
   agentEnvVars:
