@@ -3,7 +3,7 @@ questions:
   default: test
   description: "これはテストです。"
   required: true
-  type: string
+  type: multiline
   group: "Test"
 - variable: cluster.name
   default: mycluster
