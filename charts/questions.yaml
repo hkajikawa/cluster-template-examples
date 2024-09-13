@@ -4,7 +4,7 @@ questions:
   description: "これはテストです。"
   required: true
   type: string
-  group: "Test"
+  group: "General"
 - variable: cluster.name
   default: mycluster
   description: "Specify the name of the cluster"
