@@ -1,4 +1,10 @@
 questions:
+- variable: test
+  default: test
+  description: "これはテストです。"
+  required: true
+  type: string
+  group: "Test"
 - variable: cluster.name
   default: mycluster
   description: "Specify the name of the cluster"
