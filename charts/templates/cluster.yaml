@@ -1,56 +1,492 @@
 apiVersion: provisioning.cattle.io/v1
 kind: Cluster
 metadata:
-  {{- if .Values.cluster.labels }}
-  labels:
-{{ toYaml .Values.cluster.labels | indent 4 }}
-  {{- end }}
-  {{- if .Values.cluster.annotations }}
-  annotations:
-{{ toYaml .Values.cluster.annotations | indent 4 }}
-  {{- end }}
-  name: {{ .Values.cluster.name }}
+  name: rke2-custom2
   namespace: fleet-default
 spec:
-  {{- if .Values.cloudCredentialSecretName }}
-  cloudCredentialSecretName: {{ .Values.cloudCredentialSecretName }}
-  {{- end }}
-  {{- if .Values.kubernetesVersion }}
-  kubernetesVersion: {{ .Values.kubernetesVersion }}
-  {{- end }}
-  {{- if .Values.rke.localClusterAuthEndpoint.enabled }}
-  localClusterAuthEndpoint:
-    enabled: {{ .Values.rke.localClusterAuthEndpoint.enabled }}
-    fqdn: {{ .Values.rke.localClusterAuthEndpoint.fqdn }}
-    caCerts: {{ .Values.rke.localClusterAuthEndpoint.caCerts }}
-  {{- end }}
-  # enable network policy
-  enableNetworkPolicy: true
-  # specify rancher helm chart values deployed into downstream cluster
-  # rancherValues: {}
-  rkeConfig:
-    {{- if ne .Values.cloudprovider "custom" }}
-    machinePools:
-    upgradeStrategy:
-      controlPlaneDrainOptions:
-        enabled: false
-        # deleteEmptyDirData: false
-        # disableEviction: false
-        # gracePeriod: 0
-        # ignoreErrors: false
-        # skipWaitForDeleteTimeoutSeconds: 0
-        # timeout: 0
-      workerDrainOptions:
-        enabled: false
-        # deleteEmptyDirData: false
-        # disableEviction: false
-        # gracePeriod: 0
-        # ignoreErrors: false
-        # skipWaitForDeleteTimeoutSeconds: 0
-        # timeout: 0
-      workerConcurrency: "10%"
-      controlPlaneConcurrency: "10%"
-{{- if .Values.agentEnvs }}
   agentEnvVars:
-{{ toYaml .Values.agentEnvs | indent 4 }}
-{{- end }}
+  cloudCredentialSecretName:
+  clusterAPIConfig:
+  clusterAgentDeploymentCustomization:
+    overrideAffinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: In
+              values:
+              - 'true'
+          weight: 100
+        - preference:
+            matchExpressions:
+            - key: node-role.kubernetes.io/master
+              operator: In
+              values:
+              - 'true'
+          weight: 100
+        - preference:
+            matchExpressions:
+            - key: topology.kubernetes.io/region
+              operator: In
+              values:
+              - jp-east-2
+          weight: 100
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - cattle-cluster-agent
+            topologyKey: kubernetes.io/hostname
+          weight: 100
+  defaultClusterRoleForProjectMembers:
+  defaultPodSecurityAdmissionConfigurationTemplateName:
+  enableNetworkPolicy: false
+  fleetAgentDeploymentCustomization:
+    overrideAffinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+            - key: topology.kubernetes.io/region
+              operator: In
+              values:
+              - jp-east-2
+          weight: 100
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: node-role.kubernetes.io/worker
+              operator: Exists
+  kubernetesVersion: v1.30.4+rke2r1
+  localClusterAuthEndpoint:
+  redeploySystemAgentGeneration:
+  rkeConfig:
+    additionalManifest:
+    chartValues:
+      rke2-calico:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/master
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: topology.kubernetes.io/region
+                  operator: In
+                  values:
+                  - jp-east-2
+              weight: 100
+        tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 30
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 30
+        topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              k8s-app: tigera-operator
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              k8s-app: tigera-operator
+        installation:
+          calicoNetwork:
+            nodeAddressAutodetectionV4:
+              kubernetes: NodeInternalIP
+          controlPlaneTolerations:
+            - key: CriticalAddonsOnly
+              operator: Exists
+            - effect: NoSchedule
+              operator: Exists
+            - effect: NoExecute
+              operator: Exists
+            - effect: NoExecute
+              key: node.kubernetes.io/not-ready
+              operator: Exists
+              tolerationSeconds: 30
+            - effect: NoExecute
+              key: node.kubernetes.io/unreachable
+              operator: Exists
+              tolerationSeconds: 30
+          calicoKubeControllersDeployment:
+            spec:
+              template:
+                spec:
+                  affinity:
+                    nodeAffinity:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                      - preference:
+                          matchExpressions:
+                          - key: node-role.kubernetes.io/control-plane
+                            operator: In
+                            values:
+                            - 'true'
+                        weight: 100
+                      - preference:
+                          matchExpressions:
+                          - key: node-role.kubernetes.io/master
+                            operator: In
+                            values:
+                            - 'true'
+                        weight: 100
+                      - preference:
+                          matchExpressions:
+                          - key: topology.kubernetes.io/region
+                            operator: In
+                            values:
+                            - jp-east-2
+                        weight: 100
+                  tolerations:
+                  - key: CriticalAddonsOnly
+                    operator: Exists
+                  - effect: NoSchedule
+                    operator: Exists
+                  - effect: NoExecute
+                    operator: Exists
+                  - effect: NoExecute
+                    key: node.kubernetes.io/not-ready
+                    operator: Exists
+                    tolerationSeconds: 30
+                  - effect: NoExecute
+                    key: node.kubernetes.io/unreachable
+                    operator: Exists
+                    tolerationSeconds: 30
+          typhaDeployment:
+            spec:
+              template:
+                spec:
+                  affinity:
+                    nodeAffinity:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                      - preference:
+                          matchExpressions:
+                          - key: node-role.kubernetes.io/control-plane
+                            operator: In
+                            values:
+                            - 'true'
+                        weight: 100
+                      - preference:
+                          matchExpressions:
+                          - key: node-role.kubernetes.io/master
+                            operator: In
+                            values:
+                            - 'true'
+                        weight: 100
+                      - preference:
+                          matchExpressions:
+                          - key: topology.kubernetes.io/region
+                            operator: In
+                            values:
+                            - jp-east-2
+                        weight: 100
+      rke2-coredns:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/master
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: topology.kubernetes.io/region
+                  operator: In
+                  values:
+                  - jp-east-2
+              weight: 100
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: k8s-app
+                      operator: In
+                      values:
+                        - kube-dns
+                topologyKey: kubernetes.io/hostname
+        service:
+          annotations:
+            service.kubernetes.io/topology-aware-hints: auto
+        tolerations:
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 30
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 30
+        topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              k8s-app: kube-dns
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              k8s-app: kube-dns
+        autoscaler:
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - preference:
+                  matchExpressions:
+                  - key: topology.kubernetes.io/region
+                    operator: In
+                    values:
+                    - jp-east-2
+                weight: 100
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node-role.kubernetes.io/worker
+                    operator: Exists
+          tolerations:
+          - key: CriticalAddonsOnly
+            operator: Exists
+          - effect: NoExecute
+            operator: Exists
+          - effect: NoSchedule
+            operator: Exists
+          - effect: NoExecute
+            key: node.kubernetes.io/not-ready
+            operator: Exists
+            tolerationSeconds: 30
+          - effect: NoExecute
+            key: node.kubernetes.io/unreachable
+            operator: Exists
+            tolerationSeconds: 30
+          topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                k8s-app: kube-dns
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                k8s-app: kube-dns
+      rke2-ingress-nginx:
+        admissionWebhooks:
+          service:
+            annotations:
+              service.kubernetes.io/topology-aware-hints: auto
+      rke2-metrics-server:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                - key: topology.kubernetes.io/region
+                  operator: In
+                  values:
+                  - jp-east-2
+              weight: 100
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: node-role.kubernetes.io/worker
+                  operator: Exists
+        topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: rke2-metrics-server
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: rke2-metrics-server
+        service:
+          annotations:
+            service.kubernetes.io/topology-aware-hints: auto
+      rke2-snapshot-controller:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/master
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: topology.kubernetes.io/region
+                  operator: In
+                  values:
+                  - jp-east-2
+              weight: 100
+        tolerations:
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 30
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 30
+      rke2-snapshot-validation-webhook:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/master
+                  operator: In
+                  values:
+                  - 'true'
+              weight: 100
+            - preference:
+                matchExpressions:
+                - key: topology.kubernetes.io/region
+                  operator: In
+                  values:
+                  - jp-east-2
+              weight: 100
+        tolerations:
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 30
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 30
+    dataDirectories:
+    etcd:
+      disableSnapshots: false
+#      s3:
+#        bucket: hkajikawa-idcf
+#        cloudCredentialName: cattle-global-data:cc-v9g64
+#        endpoint: storage.googleapis.com
+#        endpointCA: ''
+#        folder: etcd-backup
+#        region: asia-northeast1
+#        skipSSLVerify: false
+      snapshotRetention: 5
+      snapshotScheduleCron: 0 */5 * * *
+    etcdSnapshotCreate:
+    etcdSnapshotRestore:
+    infrastructureRef:
+    machineGlobalConfig:
+      audit-policy-file: |
+        apiVersion: audit.k8s.io/v1
+        kind: Policy
+        metadata:
+          creationTimestamp: null
+        rules:
+        - level: Metadata
+      cluster-cidr: 10.146.0.0/16
+      cluster-dns: 10.147.0.10
+      cni: calico
+      disable-kube-proxy: false
+      etcd-arg:
+        - '--heartbeat-interval=500'
+        - '--election-timeout=10000'
+        - '--quota-backend-bytes=8589934592'
+      etcd-expose-metrics: false
+      kube-apiserver-arg:
+        - '--feature-gates=TopologyAwareHints=true'
+        - '--default-not-ready-toleration-seconds=300'
+        - '--default-not-ready-toleration-seconds=300'
+      kube-controller-manager-arg:
+        - '--feature-gates=TopologyAwareHints=true'
+      kube-scheduler-arg:
+        - '--feature-gates=TopologyAwareHints=true'
+      service-cidr: 10.147.0.0/16
+      service-node-port-range: 30000-32767
+    machinePoolDefaults:
+    machinePools:
+    machineSelectorConfig:
+      - config:
+          kube-proxy-arg:
+            - '--feature-gates=TopologyAwareHints=true'
+          kubelet-arg:
+            - '--feature-gates=TopologyAwareHints=true'
+          protect-kernel-defaults: false
+    machineSelectorFiles:
+    networking:
+    provisionGeneration:
+    registries:
+    rotateCertificates:
+    rotateEncryptionKeys:
+    upgradeStrategy:
