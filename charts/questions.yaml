@@ -1,9 +1,58 @@
 questions:
-- variable: test
-  default: test
+- variable: string
+  description: "これはテストです。"
+  required: true
+  type: string
+  group: "Test"
+- variable: multiline
   description: "これはテストです。"
   required: true
   type: multiline
+  group: "Test"
+- variable: boolean
+  description: "これはテストです。"
+  required: true
+  type: boolean
+  group: "Test"
+- variable: int
+  description: "これはテストです。"
+  required: true
+  type: int
+  group: "Test"
+- variable: enum
+  description: "これはテストです。"
+  required: true
+  type: enum
+  group: "Test"
+- variable: password
+  description: "これはテストです。"
+  required: true
+  type: password
+  group: "Test"
+- variable: storageclass
+  description: "これはテストです。"
+  required: true
+  type: storageclass
+  group: "Test"
+- variable: hostname
+  description: "これはテストです。"
+  required: true
+  type: hostname
+  group: "Test"
+- variable: pvc
+  description: "これはテストです。"
+  required: true
+  type: pvc
+  group: "Test"
+- variable: secret
+  description: "これはテストです。"
+  required: true
+  type: secret
+  group: "Test"
+- variable: cloudcredential
+  description: "これはテストです。"
+  required: true
+  type: cloudcredential
   group: "Test"
 - variable: cluster.name
   default: mycluster
